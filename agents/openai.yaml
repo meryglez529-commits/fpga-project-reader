@@ -1,4 +1,4 @@
 interface:
   display_name: "FPGA Project Reader"
-  short_description: "Map FPGA projects, deep-read RTL paths, and annotate single files."
-  default_prompt: "Use $fpga-project-reader to analyze this FPGA project, identify the main data links, deep-read selected paths, or make a single RTL/source file beginner-readable with first-principles comments."
+  short_description: "Map FPGA projects, deep-read RTL paths, annotate single files, and set up an AI-work co-work environment for closed-loop edits."
+  default_prompt: "Use $fpga-project-reader to analyze this FPGA project, identify the main data links, deep-read selected paths, make a single RTL/source file beginner-readable with first-principles comments, or set up the `AI-work/` co-work environment so closed-loop sim/synth/edit cycles can run safely."
