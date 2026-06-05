@@ -1,6 +1,6 @@
 # AI-work Bootstrap
 
-> 目标：当 `fpga-project-reader` skill 第一次在一个工程上被触发时，先建立 `AI-work/` 目录，作为这个 skill 所有产出的统一收纳处。后续四个 mode 都把产出写到这里。
+> 目标：当 `fpga-cowork` skill 第一次在一个工程上被触发时，先建立 `AI-work/` 目录，作为这个 skill 所有产出的统一收纳处。后续五个 mode 都把产出写到这里。
 
 这一步是 Stage 0。它**不替代**任何一个 mode，但**每个 mode 启动前都要先确认 `AI-work/` 存在**。
 
@@ -45,6 +45,8 @@ AI-work/
 │   └── .gitkeep
 ├── env/
 │   └── .gitkeep
+├── features/
+│   └── .gitkeep
 ├── scripts/
 │   └── .gitkeep
 ├── sim/
@@ -62,7 +64,7 @@ AI-work/
 ```markdown
 # AI-work
 
-这是 `fpga-project-reader` skill 为本工程建立的协作工作区。所有 skill 产出（工程地图、数据通路精读、单文件注释、协作环境）都收纳在这里，不污染原工程目录。
+这是 `fpga-cowork` skill 为本工程建立的协作工作区。所有 skill 产出（工程地图、数据通路精读、单文件注释、协作环境、新功能开发证据）都收纳在这里，不污染原工程目录。
 
 ## 目录用途
 
@@ -70,16 +72,17 @@ AI-work/
 |---|---|---|
 | `guide/` | Mode 1 全工程地图 + Mode 2 数据通路精读 | `FPGA_PROJECT_GUIDE.md`、`IP-INVENTORY.md`、`CLOCKS.md`、`data-paths/*.md`、`diagrams/*.d2` 和渲染后的 `.svg` |
 | `annotations/` | Mode 3 单文件注释 | 每次注释一份说明：注释了哪个文件、为什么、改了什么。源文件本体仍在工程目录原位 |
-| `env/` | Mode 4 协作环境搭建 | `ENVIRONMENT.md`、`HARDWARE.md`、`RULES.md`、`FOCUS.md`、`SNAPSHOTS.md`、`GLOSSARY.md` |
-| `scripts/` | Mode 4 | 从 skill 模板复制并定制的 `.tcl`/`.py`，可直接 `vivado -mode batch -source` 调用 |
+| `env/` | Mode 4 协作环境搭建 | `ENVIRONMENT.md`、`HARDWARE.md`、`RULES.md`、`FOCUS.md`、`SNAPSHOTS.md`、`GLOSSARY.md`、`SIMULATION.md` |
+| `features/` | Mode 5 功能开发工作包 | 每个新增/修改功能一个 `<feature-slug>/<UNIT>/`，包含 `REQUIREMENTS.md`、`ARCHITECTURE.md`、`IMPLEMENTATION.md`、`sim/`、`synth/`、`impl/`、`ila/`、`out/` |
+| `scripts/` | Mode 4 | 从 skill 模板复制并定制的项目级 `.tcl`/`.py`，可直接 `vivado -mode batch -source` 调用 |
 | `sim/` | 闭环协作中 AI 写的 testbench | `*.v`、`.do` |
-| `sim_out/` | 闭环协作产物 | 仿真 log、csv、wdb（不进 git） |
-| `reports/` | 闭环协作产物 | 综合/时序/DRC 报告（不进 git） |
+| `sim_out/` | Mode 4 运行产物 | 环境自检仿真 log、csv、wdb（不进 git） |
+| `reports/` | Mode 4 运行产物 | 环境自检综合/时序/DRC 报告（不进 git） |
 
 ## 顶层文件
 
 - `LOG.md`：协作日志，每次对话和每轮改动追加一行
-- `OPEN-QUESTIONS.md`：四个 mode 共享的待解决问题清单
+- `OPEN-QUESTIONS.md`：五个 mode 共享的待解决问题清单
 
 ## 如何回滚
 
@@ -107,7 +110,7 @@ AI-work/
 ```markdown
 # Open Questions
 
-四个 mode 共享的待解决问题。每条都标注来源 mode、提出时间、当前状态。
+五个 mode 共享的待解决问题。每条都标注来源 mode、提出时间、当前状态。
 
 | 编号 | 提出时间 | 来源 mode | 问题 | 状态 | 解决依据 |
 |---|---|---|---|---|---|
@@ -133,9 +136,13 @@ reports/
 *.vcd
 xsim.dir/
 .Xil/
+vivado*.str
+hw_ila_data_*/
 ```
 
-`sim/`、`scripts/`、`env/`、`guide/`、`annotations/` 这些是协作资产，**进 git**。
+`sim/`、`scripts/`、`env/`、`guide/`、`annotations/`、`features/*/*/*.md`、`features/*/*/sim/*.tcl`、`features/*/*/ila/*.tcl` 这些是协作资产，**进 git**。
+
+`features/*/*/out/` 里哪些证据进 git 由项目规则决定：`result.txt`、小型 log、CSV 通常有价值；大型 `.wdb`、`.dcp`、`.bit` 通常不进 git，但路径和摘要必须写进 unit 文档。
 
 ## 4. Cross-mode 路由协议
 
@@ -146,7 +153,8 @@ xsim.dir/
 | Whole-project map | `AI-work/guide/FPGA_PROJECT_GUIDE.md` 主文档 + `AI-work/guide/IP-INVENTORY.md` + `AI-work/guide/CLOCKS.md` + `AI-work/guide/diagrams/architecture.d2` 等 |
 | Selected-path deep read | `AI-work/guide/data-paths/<path-slug>-deep-reading.md`，slug 用英文短横线（例如 `adc-to-ddr`、`dac-output`） |
 | Single-file close read | 注释加在源文件原位（不在 AI-work 内复制源码），但在 `AI-work/annotations/<filename>.md` 里留一份说明 |
-| Co-work setup | `AI-work/env/*.md` + `AI-work/scripts/*.tcl` |
+| Co-work setup | `AI-work/env/*.md` + `AI-work/scripts/*.tcl` + 项目级仿真 SOP |
+| Feature development | `AI-work/features/<feature-slug>/<UNIT>/` 阶段式工作包；完成验证后把稳定事实回写 `AI-work/guide/data-paths/*_AS_BUILT.md` |
 
 `OPEN-QUESTIONS.md` 在所有 mode 间共享，遇到不确定就追加。
 
@@ -163,6 +171,7 @@ xsim.dir/
 ## 6. 不该做的事
 
 - 不要把 skill 产出散落在工程根目录或 `*.srcs/` 子目录里。
+- 不要把新的仿真、综合、实现、bitstream、ILA 产物散落在 D 盘根目录或工程根目录；它们必须进入当前 unit 的 `out/` 或 Mode 4 的 `sim_out/`/`reports/`。
 - 不要在 `AI-work/` 里复制工程源码副本（除非用户明确要求做隔离实验）。
 - 不要把 `sim_out/`、`reports/`、`*.wdb`、`*.jou` 提交进 git。
 - 不要在 `AI-work/` 里删除别的 mode 留下的文件。

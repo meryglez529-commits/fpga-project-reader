@@ -2,6 +2,8 @@
 
 Use this reference when the user names one RTL/source file and asks to read it, explain it, add comments, annotate it, or make it beginner-readable.
 
+This mode may also produce a single-file version/diff reading note, such as comparing an old backup with the active file. It still does not authorize functional RTL edits unless the user explicitly asks for a fix and Mode 5 is active.
+
 ## Goal
 
 Turn one source file into a readable teaching surface without changing behavior. The best comments help the reader build the right mental model before reading assignments and state machines.
@@ -69,6 +71,9 @@ Avoid comments that are technically correct but not useful to a novice, such as 
    - `begin`/`end` counts are balanced for the edited file;
    - key assignments and port names still exist;
    - searches for obvious mojibake in comments do not hit newly introduced guidance.
+
+10. **Bridge to Mode 5 when needed.**
+    If close reading reveals a bug, missing feature, stale annotation, or required behavior change, record the finding in `AI-work/annotations/` and recommend a Mode 5 work package. Do not silently fix behavior inside Mode 3.
 
 ## Comment Shape
 
@@ -169,3 +174,26 @@ After editing, summarize:
 - which file and sections were changed;
 - what validation was run;
 - whether functional RTL was untouched.
+
+## Annotation Record Shape
+
+Write a small record under `AI-work/annotations/`:
+
+```markdown
+# <file> close read / annotation
+
+| 项 | 内容 |
+|---|---|
+| 源文件 | |
+| 模块 | |
+| 所属数据链路 | |
+| 上游 | |
+| 下游 | |
+| 本次类型 | 教学注释 / 单文件解释 / 新旧 diff |
+| 是否改功能 RTL | 否 / 是（若是，必须转 Mode 5） |
+| 对应版本/时间 | |
+
+## 一句话模型
+## 本次改了什么注释或读出了什么差异
+## 可能影响后续 Mode 5 的点
+```

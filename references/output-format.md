@@ -22,9 +22,10 @@ Create a Markdown guide named like `FPGA_PROJECT_GUIDE.md` unless the user speci
 ## 6. 控制通路
 ## 7. 存储与缓冲
 ## 8. 验证与上板
-## 9. 需要深入阅读的关键文件
-## 10. 待确认问题与风险
-## 11. 下一步阅读路线
+## 9. Feature / 工作包索引
+## 10. 需要深入阅读的关键文件
+## 11. 待确认问题与风险
+## 12. 下一步阅读路线
 ```
 
 Do not predeclare how many main links exist. Add as many `5.x` subsections as the project actually needs.
@@ -73,6 +74,11 @@ Do not predeclare how many main links exist. Add as many `5.x` subsections as th
 | 资源 | 文件/模块 | 对应数据链路 | 用途 |
 |---|---|---|---|
 
+### Feature 工作包索引表
+
+| Feature | 当前状态 | 过程入口 | 稳定事实入口 | 备注 |
+|---|---|---|---|---|
+
 ### 关键文件表
 
 | 优先级 | 文件 | 需要重点看的内容 |
@@ -82,10 +88,10 @@ Do not predeclare how many main links exist. Add as many `5.x` subsections as th
 
 Use `> ⚠️ 待确认` for black boxes, missing sources, unclear clock frequencies, ambiguous business semantics, inferred sample rates, or endpoints inside unexpanded IP. Collect every such item in section 10.
 
-Section 10 should separate confirmed evidence from residual uncertainty:
+Section 11 should separate confirmed evidence from residual uncertainty:
 
 ```markdown
-## 10. 待确认问题与风险
+## 11. 待确认问题与风险
 
 本轮已从当前工程确认：
 
@@ -97,3 +103,9 @@ Section 10 should separate confirmed evidence from residual uncertainty:
 ```
 
 Evidence files should include paths and line numbers when practical. If a fact is inferred from several files, say so explicitly and keep the confidence lower than a direct configuration or constraint.
+
+## Guide vs Feature Packages
+
+`FPGA_PROJECT_GUIDE.md` stores stable project facts. It may link to active feature packages, but it must not present in-progress requirements, plans, failed experiments, or unverified feature assumptions as architecture facts.
+
+If `AI-work/features/` exists, include section 9 with one row per meaningful work package. Use `> ⚠️ 待确认` when feature status is unclear.

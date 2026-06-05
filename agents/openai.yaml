@@ -1,4 +1,4 @@
 interface:
-  display_name: "FPGA Project Reader"
-  short_description: "Map FPGA projects, deep-read RTL paths, annotate single files, and set up an AI-work co-work environment for closed-loop edits."
-  default_prompt: "Use $fpga-project-reader to analyze this FPGA project, identify the main data links, deep-read selected paths, make a single RTL/source file beginner-readable with first-principles comments, or set up the `AI-work/` co-work environment so closed-loop sim/synth/edit cycles can run safely."
+  display_name: "FPGA Cowork"
+  short_description: "Map FPGA projects, deep-read RTL paths, set up AI-work, and co-develop features through RTL, sim, synth, and ILA evidence."
+  default_prompt: "Use $fpga-cowork to analyze this FPGA project, identify the main data links, deep-read selected paths, annotate or compare a single RTL/source file, set up the `AI-work/` co-work environment with project-level Vivado simulation SOP, or develop a new feature through requirements, architecture, RTL implementation, simulation replay, synthesis/implementation/bitstream evidence, ILA/board-debug artifacts, and as-built handoff."

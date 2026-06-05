@@ -5,15 +5,15 @@
 Use source-plus-rendered-image:
 
 ```text
-docs/diagrams/*.d2      # large diagram source
-docs/diagrams/*.mmd     # small/legacy Mermaid source if useful
-docs/images/*.svg       # rendered diagrams referenced by Markdown
+AI-work/guide/diagrams/*.d2                 # stable Mode 1/2/as-built diagram source
+AI-work/guide/diagrams/*.svg                # rendered stable diagrams
+AI-work/features/<feature>/<UNIT>/diagrams/ # Mode 5 working design/verification diagrams
 ```
 
-Markdown should reference SVG files:
+Stable guide Markdown should reference SVG files:
 
 ```markdown
-![图名](docs/images/fpga-overview.svg)
+![图名](diagrams/fpga-overview.svg)
 ```
 
 ## Tool Choice
@@ -63,3 +63,7 @@ For small Mermaid diagrams:
 - Do not use `<br/>` unless absolutely necessary.
 - Do not exceed six main-path nodes.
 - If it becomes wide or visually important, migrate it to D2.
+
+## Mode 5 Diagram Rule
+
+During feature development, keep requirement sketches, architecture alternatives, state-machine insertions, CDC/FIFO timing diagrams, and ILA observation routes inside the feature unit. Promote only verified final diagrams to `AI-work/guide/diagrams/` or the relevant `*_AS_BUILT.md`.

@@ -26,6 +26,7 @@ REQUIRED_DIRS = [
     "guide/diagrams",
     "annotations",
     "env",
+    "features",
     "scripts",
     "sim",
     "sim_out",
@@ -47,6 +48,7 @@ ENV_FILES = [
     "env/FOCUS.md",
     "env/SNAPSHOTS.md",
     "env/GLOSSARY.md",
+    "env/SIMULATION.md",
 ]
 
 # Required substring patterns inside each env/*.md.
@@ -86,6 +88,13 @@ ENV_REQUIRED_PATTERNS: dict[str, list[tuple[str, re.Pattern[str]]]] = {
     "env/GLOSSARY.md": [
         ("glossary table heading", re.compile(r"\|\s*缩写\s*\|") ),
     ],
+    "env/SIMULATION.md": [
+        ("simulator/toolchain", re.compile(r"(Vivado|xsim|ModelSim|Questa)", re.IGNORECASE)),
+        ("working simulation path", re.compile(r"(可用|推荐|working|PASS)", re.IGNORECASE)),
+        ("broken/blocked path", re.compile(r"(不可用|失败|BLOCKED|Broken|加密|Webtalk|wbtcv|init\.tcl)", re.IGNORECASE)),
+        ("batch/manual flow", re.compile(r"(batch|PowerShell|run_manual|xvlog|xelab)", re.IGNORECASE)),
+        ("GUI flow", re.compile(r"(GUI|Tcl Console|launch_simulation)", re.IGNORECASE)),
+    ],
 }
 
 # Files that, if they contain too many "TBD"/"⚠️" markers, are still placeholder.
@@ -111,6 +120,7 @@ REQUIRED_SCRIPTS = [
 RECOMMENDED_SCRIPTS = [
     "scripts/export_csv.tcl",
     "scripts/diff_report.tcl",
+    "scripts/run_manual.tcl",
 ]
 
 

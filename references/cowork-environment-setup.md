@@ -27,11 +27,12 @@
 ```text
 Step 1  →  探测工具链与工程现状（自动）
 Step 2  →  问用户必要问题（4~8 个，按工程实际情况裁剪）
-Step 3  →  写 env/ 下的六份 .md
+Step 3  →  写 env/ 下的七份 .md
 Step 4  →  从 skill 模板生成 AI-work/scripts/*.tcl
-Step 5  →  建立基线快照 + 回滚演练
-Step 6  →  跑 check_env.tcl 一次，确认通畅
-Step 7  →  把 RULES.md 给用户看，等明确确认
+Step 5  →  建立/更新项目级仿真 SOP
+Step 6  →  建立基线快照 + 回滚演练
+Step 7  →  跑 check_env.tcl 一次，确认通畅
+Step 8  →  把 RULES.md 给用户看，等明确确认
 ```
 
 每一步完成后在 `LOG.md` 追加一条。
@@ -45,6 +46,7 @@ Step 7  →  把 RULES.md 给用户看，等明确确认
 | Vivado 可执行路径 | `where vivado.bat`（PowerShell）或 `where.exe vivado.bat` | ENVIRONMENT.md |
 | Vivado 版本 | `vivado -version`（如果路径已知） | ENVIRONMENT.md |
 | 仿真器候选 | 检查 `where vsim`、`where questasim`、Vivado 自带 xsim | ENVIRONMENT.md |
+| 仿真可用路径 | 探测 batch/GUI/xsim/ModelSim 路径，记录可用和不可用原因 | SIMULATION.md |
 | 工程文件 | 扫 `.xpr`、`.tcl`（含 `create_project` 的） | ENVIRONMENT.md |
 | 顶层模块 | 复用 Mode 1 结果，否则查 `set_property top` | ENVIRONMENT.md |
 | 器件型号 | 查 `set_property part` 或 `.xpr` 第一行 part | HARDWARE.md |
@@ -87,7 +89,7 @@ Step 7  →  把 RULES.md 给用户看，等明确确认
 - 风格小事可以自己扫推断（缩进、注释颜色），扫不出再问。
 - 一次问超过 4 个，会让用户烦躁。分批问。
 
-## 4. Step 3 — 写 env/ 下的六份 .md
+## 4. Step 3 — 写 env/ 下的七份 .md
 
 每份都有最小必备字段。下面是模板。
 
@@ -377,6 +379,43 @@ Copy-Item -Recurse AXI_DDR.srcs.baseline_YYYYMMDD AXI_DDR.srcs
 | `*_wr_en/*_rd_en` | FIFO 接口 |
 ```
 
+### 4.7 `env/SIMULATION.md`
+
+这是项目级仿真环境 SOP。它记录“这个工程在这台机器上怎么跑仿真”，不是某个功能的 testbench 说明。
+
+如果项目已经有成熟 SOP（例如 `AI-work/guide/VIVADO_SIM_SOP.md`），可以在这里链接它，但 `env/SIMULATION.md` 必须说明哪个文件是权威入口。
+
+最小结构：
+
+```markdown
+# Simulation Environment
+
+## 1. 当前结论
+
+| 项 | 结论 |
+|---|---|
+| 推荐仿真器 | xsim / ModelSim / Questa |
+| 推荐 batch 路径 | <可用路径或 BLOCKED> |
+| 推荐 GUI 路径 | <可用路径或 BLOCKED> |
+| 项目级详细 SOP | `AI-work/guide/VIVADO_SIM_SOP.md` / 本文件 |
+
+## 2. 工具链与路径
+## 3. 可用/不可用仿真路径
+## 4. 特殊环境约束
+## 5. Batch 仿真 SOP
+## 6. GUI 仿真 SOP
+## 7. IP simulation 文件生成与 prj 规则
+## 8. 常见故障与处理
+## 9. 可复用模板
+## 10. 验证记录
+```
+
+要特别记录：
+
+- 加密 `init.tcl`、IP 加密、license、公司网络、Webtalk、路径长度等会影响仿真的环境因素。
+- 哪些命令已验证可用，哪些命令已验证不可用，以及原因。
+- Mode 5 的 `sim/SIM_REPLAY.md` 应该引用这里，而不是重复环境坑。
+
 ## 5. Step 4 — 生成 scripts/
 
 从 skill 的 `scripts/templates/` 复制以下模板到 `AI-work/scripts/`，**根据本工程实际情况修改**：
@@ -385,6 +424,7 @@ Copy-Item -Recurse AXI_DDR.srcs.baseline_YYYYMMDD AXI_DDR.srcs
 |---|---|---|
 | `check_env.tcl` | xpr 路径、付费 IP 名 | 环境自检：开工程 + 列源文件 + 验 license + report_compile_order |
 | `run_sim.tcl` | top tb 名、要导出的信号集 | xsim 一键编译+仿真+导 csv |
+| `run_manual.tcl` | 复杂环境下手动 xvlog/xelab/xsim 流程 | 绕开 `launch_simulation` 或直接 `xsim.exe` 的环境坑 |
 | `run_synth.tcl` | xpr 路径、报告输出位置 | 综合 + 抽 WNS/TNS/资源 |
 | `export_csv.tcl` | 信号集合 | 把仿真波形指定信号导成 csv |
 | `diff_report.tcl` | 两个 checkpoint 路径 | 资源/时序对比 |
@@ -396,7 +436,29 @@ Copy-Item -Recurse AXI_DDR.srcs.baseline_YYYYMMDD AXI_DDR.srcs
 # Customized for project: AXI_DDR
 ```
 
-## 6. Step 5 — 基线快照 + 回滚演练
+## 6. Step 5 — 建立/更新项目级仿真 SOP
+
+按 `references/simulation-environment.md` 执行。至少要判断：
+
+- batch 仿真是否可用。
+- GUI 仿真是否可用。
+- 直接调用 `xsim.exe` 是否可用。
+- IP 仿真模型是否需要 `generate_target Simulation`。
+- 是否存在加密 Tcl/IP、Webtalk、路径长度、license、仿真库等限制。
+
+如果复杂仿真暂时无法跑通，写清楚：
+
+```text
+SIMULATION BLOCKED:
+- 已验证失败路径：
+- 失败原因：
+- 仍可使用的验证方式：
+- Mode 5 需要避免宣称：
+```
+
+注意：`check_env.tcl` 只证明工程能打开、compile order 能解析；它不等于复杂 testbench 能跑通。
+
+## 7. Step 6 — 基线快照 + 回滚演练
 
 ### 6.1 建立基线
 
@@ -434,7 +496,7 @@ Copy-Item -Recurse AXI_DDR.srcs "AXI_DDR.srcs.baseline_$ts"
 
 把演练过程写进 `SNAPSHOTS.md` 的"回滚演练"表。
 
-## 7. Step 6 — 跑 check_env.tcl
+## 8. Step 7 — 跑 check_env.tcl
 
 ```powershell
 cd <project_root>
@@ -455,7 +517,7 @@ cd <project_root>
 
 任何一项不通过，先解决再继续。
 
-## 8. Step 7 — 把 RULES.md 给用户看，等明确确认
+## 9. Step 8 — 把 RULES.md 给用户看，等明确确认
 
 不要自己默认通过。**显式向用户展示 RULES.md 的关键条款**，并要求"是/可以/同意"这种明确回复。用户回复后：
 
@@ -465,20 +527,23 @@ cd <project_root>
 
 之后任何 RTL 编辑、IP 改参数、综合发起都可以基于这份合同执行。
 
-## 9. 验收
+## 10. 验收
 
 调用 `scripts/validate-ai-work.py`：
 
 ```powershell
 python <skill_path>/scripts/validate-ai-work.py <project_root>/AI-work
+python <skill_path>/scripts/validate-simulation-sop.py <project_root>/AI-work
 ```
 
 期望输出 `PASS`。任何 `FAIL` 都要补齐对应字段后重新跑。
 
-## 10. 不该做的事
+## 11. 不该做的事
 
 - 不要在用户没确认 `RULES.md` 之前发起任何 RTL 修改。
 - 不要在 setup 过程中"顺手"修工程的 bug——那是闭环阶段的工作，先把环境搭完。
+- 不要把复杂仿真经验只写进某个 feature unit；可复用经验要回写项目级 `env/SIMULATION.md` 或指定的 `VIVADO_SIM_SOP.md`。
+- 不要让新仿真/综合/ILA 产物散到 D 盘根目录或工程根目录；规则写进 `RULES.md`。
 - 不要把硬件细节（DDR3 颗粒型号、PHY 子型号）凭推测写进 `HARDWARE.md`，标 `> ⚠️ 待确认` 然后留给用户填。
 - 不要复用别的工程的 `HARDWARE.md`/`RULES.md`，每个工程都重新走一遍 SOP。
 - 不要在 `RULES.md` 写"AI 自由发挥"这种空话——闭环刹车要可机械判定。

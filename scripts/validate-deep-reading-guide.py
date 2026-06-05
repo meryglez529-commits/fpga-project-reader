@@ -3,7 +3,7 @@
 
 This script is a guardrail, not an RTL reviewer. It catches the common failure
 where a "deep read" becomes a conclusion summary and loses the per-file reading
-steps required by the fpga-project-reader skill.
+steps required by the fpga-cowork skill.
 """
 
 from __future__ import annotations
