@@ -157,6 +157,8 @@ Required stage checks:
 - Implementation records changed modules, status, errors, fixes, commands, and evidence paths.
 - Simulation replay gives concrete GUI/batch commands, testbench/top, TC explanations, key waveform signals, pass/fail criteria, and generated logs/results.
 - Synth/impl/bitstream/ILA evidence is stored under `out/` when performed.
+- ILA/board-debug scripts live in the current unit `ila/`; captures and exports go directly to `out/ila/` or `out/hw_debug/`.
+- Before any Vivado Hardware Manager or ILA command (`open_hw_manager`, `refresh_hw_device`, `run_hw_ila`, `upload_hw_ila_data`, `display_hw_ila_data`, `write_hw_ila_data`), the Tcl script must resolve the project root from `[info script]`, create a unit-local work directory such as `out/ila/vivado_hw_work` or `out/hw_debug/vivado_hw_work`, `cd` into it, and print that directory in the log. Also snapshot `D:/hw_ila_data_*` before the run and archive any newly-created D-root spill directories into the current unit. Vivado 2021.1 Hardware Manager can create `hw_ila_data_*` placeholders under `D:\` during refresh/upload/display even when final CSV/VCD paths are absolute. When the project provides a guarded Vivado launcher such as `AI-work/scripts/run_vivado_ila_guarded.ps1`, use that launcher instead of calling `vivado.bat -mode batch -source ...` directly.
 - Runtime artifacts are not left scattered in D: root or the project root.
 - Verified facts are copied/summarized into `guide/data-paths/*_AS_BUILT.md`; plans and failed attempts stay in `features/`.
 - Run `scripts/validate-feature-work-package.py` and `scripts/scan-artifact-spill.py` when available.

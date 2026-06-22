@@ -234,7 +234,8 @@ Rules:
 - Put ILA/VIO scripts in the unit's `ila/`.
 - Export CSV/log data directly to `out/ila/` or `out/hw_debug/`.
 - Record scenario, register setup, trigger condition, result file, and conclusion.
-- If Vivado emits `hw_ila_data_*` in the current directory, move it into the unit's `out/` and record the move.
+- Before Hardware Manager commands, make scripts `cd` into a unit-local work directory and print it in the log.
+- Snapshot `D:/hw_ila_data_*` before Vivado Hardware Manager work; after the run, archive only newly-created D-root `hw_ila_data_*` spill directories into the unit's `out/ila/` or `out/hw_debug/` and record the move. Vivado 2021.1 can emit these placeholders during ILA refresh/upload/display even when CSV/VCD outputs use absolute unit-local paths.
 
 Gate:
 
