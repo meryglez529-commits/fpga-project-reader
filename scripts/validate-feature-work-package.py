@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a Mode 5 FPGA feature work package.
+"""Validate a Mode 3 FPGA feature work package.
 
 This is a guardrail for documentation/evidence structure. It does not judge RTL
 correctness.
@@ -145,7 +145,7 @@ def validate(unit: Path, project_root: Path | None) -> tuple[list[str], list[str
 
 
 def main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(description="Validate a Mode 5 feature work package.")
+    parser = argparse.ArgumentParser(description="Validate a Mode 3 feature work package.")
     parser.add_argument("unit", type=Path, help="Path to AI-work/features/<feature>/<UNIT>")
     parser.add_argument("--project-root", type=Path, default=None)
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")

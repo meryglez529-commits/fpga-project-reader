@@ -1,36 +1,36 @@
 # Feature Development SOP
 
-> Mode 5 目标：围绕一个具体 FPGA 功能，从需求对齐开始，经过架构方案、RTL 实施、仿真、综合/实现/bitstream、ILA/上板辅助验证和 as-built 回写，形成一个用户可审查、可复现、可继续接手的工作包。
+> Mode 3 目标：围绕一个具体 FPGA 功能，从需求对齐开始，经过架构方案、RTL 实施、仿真、综合/实现/bitstream、ILA/上板辅助验证和 as-built 回写，形成一个用户可审查、可复现、可继续接手的工作包。
 
 Use this reference when the user asks to implement, modify, debug, verify, synthesize, board-debug, or hand off a concrete FPGA feature.
 
 ## 0. Boundary
 
-Mode 5 is not "edit RTL quickly". It is a closed-loop development unit.
+Mode 3 is not "edit RTL quickly". It is a closed-loop development unit.
 
 Prerequisites:
 
 | Item | Requirement |
 |---|---|
-| Project context | Mode 1/2 exists, or do a minimal boundary pass first |
-| Environment | Mode 4 completed enough to know toolchain, rollback, rules, and simulation constraints |
+| Project context | Mode 1 foundation exists, or establish the needed foundation first |
+| Environment | Mode 1 records toolchain, baseline protection, rules, and simulation constraints |
 | User rules | `AI-work/env/RULES.md` explicitly confirmed |
 | Work tracking | One unit under `AI-work/features/<feature-slug>/<UNIT>/` |
 
 If requirements are unclear, write questions in `REQUIREMENTS.md` and ask the user. Do not start RTL.
 
-### 0.1 Board-debug iteration (Mode 5A)
+### 0.1 Existing-image board-debug iteration
 
-Use Mode 5A only for an already-qualified image and an already-existing unit. It covers parameter application/readback, ILA/VIO capture, scope correlation, and diagnosis; it does not authorize RTL, XDC, IP, project, simulation, implementation, or bitstream changes.
+Use this light Mode 3 branch only for an already-qualified image and an already-existing unit. It covers parameter application/readback, ILA/VIO capture, scope correlation, and diagnosis; it does not authorize RTL, XDC, IP, project, simulation, implementation, or bitstream changes.
 
-Before a Mode 5A run, record in `IMPLEMENTATION.md` or a unit-local board-debug note:
+Before this branch runs, record in `IMPLEMENTATION.md` or a unit-local board-debug note:
 
 - exact bitstream and LTX identity;
 - parameter manifest and readback addresses;
 - target signals, clocks, trigger condition, capture depth/position, and expected observation;
 - unit-local `out/.artifact_start` marker.
 
-Export evidence under the existing unit and append `AI-work/LOG.md`. If the desired measurement needs a missing probe, a different ILA clock, or a new bitstream, return to full Mode 5 and complete the probe review before building.
+Export evidence under the existing unit and append `AI-work/LOG.md`. If the desired measurement needs a missing probe, a different ILA clock, or a new bitstream, return to full Mode 3 and complete the probe review before building.
 
 ## 1. Work Package Layout
 
@@ -289,18 +289,18 @@ Rules:
 
 ## 9. Artifact Containment
 
-All new runtime artifacts belong in the current unit or project-level AI-work runtime folders.
+All AI-created files belong in the current unit, including scripts, testbenches, log/journal files, reports, waveforms, CSV/VCD/WDB, ILA data, and copied bit/LTX assets. The only permitted non-`AI-work/` writes are user-authorized edits to existing design source, constraints, IP, or project files. This containment rule is a completion gate.
 
 | Artifact | Destination |
 |---|---|
 | `vivado*.log`, `vivado*.jou` | `<UNIT>/out/<stage>/` |
 | `xvlog.log`, `xelab.log`, `xsim.log` | `<UNIT>/out/sim/` or `out/regression/` |
-| `xsim.dir`, `xvlog.pb` | Prefer `<UNIT>/out/sim/work/`; otherwise record and clean/move at handoff |
+| `xsim.dir`, `xvlog.pb` | `<UNIT>/out/sim/work/`; if a tool spills, archive only the newly-created files into the unit and record the source path |
 | `*.wdb`, `*.wcfg`, `*.vcd` | `<UNIT>/out/sim/` or `<UNIT>/sim/` for layout |
 | synth/impl/bitstream logs | `<UNIT>/out/synth/`, `out/impl/`, `out/bitstream/` |
 | `hw_ila_data_*`, ILA CSV | `<UNIT>/out/ila/` or `out/hw_debug/` |
 
-Run `scripts/scan-artifact-spill.py` when available before finalizing. For a project that already has old scattered artifacts, create a timestamp marker at unit start and scan with `--since-file <marker>` so the gate checks new spill rather than historical mess.
+Create the unit-local artifact marker before any command and run `scripts/scan-artifact-spill.py` when available before finalizing. For a project that already has old scattered artifacts, scan with `--since-file <marker>` so the gate checks new spill rather than historical mess. Do not delete or relocate pre-existing user artifacts.
 
 ## 10. State Sync Gate
 
@@ -331,7 +331,7 @@ ARTIFACT SPILL:
 
 ## 11. Final Response Shape
 
-Mode 5 final responses must include the real handoff entry points:
+Mode 3 final responses must include the real handoff entry points:
 
 ```text
 需求入口：AI-work/features/<feature>/<UNIT>/REQUIREMENTS.md

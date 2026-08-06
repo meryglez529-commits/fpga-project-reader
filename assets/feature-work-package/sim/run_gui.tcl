@@ -1,5 +1,5 @@
 #==============================================================================
-# Mode 5 GUI simulation template
+# Mode 3 GUI simulation template
 #
 # Copy into AI-work/features/<feature>/<UNIT>/sim/run_gui.tcl and customize.
 # Intended for Vivado Tcl Console. Use project-level SIMULATION.md for known
