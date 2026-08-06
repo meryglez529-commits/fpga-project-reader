@@ -21,6 +21,16 @@ Use this skill to make an unfamiliar FPGA project understandable and safe to col
 
 Mode 4 repairs the road. Mode 5 drives on it. Do not begin RTL edits, IP changes, simulation iterations, synthesis, implementation, bitstream, or board-debug automation until Mode 4 is complete, `RULES.md` is confirmed, and the work is tracked by a Mode 5 unit.
 
+### Mode 5A - Board-debug iteration without RTL change
+
+Use this constrained Mode 5 path only when all of the following are true:
+
+- A current Mode 5 unit, qualified bitstream/LTX pair, and board-debug evidence already exist.
+- The requested work is limited to register setup/readback, ILA/VIO capture, scope correlation, or diagnosis of the existing image.
+- No RTL, XDC, IP, project, simulation, synthesis, implementation, or bitstream change is made.
+
+Reuse the existing unit. Do not repeat simulation or implementation preflight. Before the run, record the qualified bit/LTX identity, parameter manifest, trigger/capture plan, and unit-local artifact marker. Save the capture and conclusion under that unit, then append `AI-work/LOG.md`. If the current probes cannot answer the question, stop Mode 5A and return to full Mode 5 before changing debug probes or generating a new bitstream. See `references/feature-development.md` sections 0 and 7.
+
 ## Stage 0: AI-work Bootstrap
 
 Every mode starts by ensuring `AI-work/` exists at the project root. If it is missing or incomplete, create or repair the skeleton from `references/ai-work-bootstrap.md`.
@@ -154,10 +164,12 @@ Required stage checks:
 
 - Requirements are confirmed before RTL work begins.
 - Architecture explains data path, trigger/control path, CDC, FIFO/storage, old-behavior preservation, constraints, and verification strategy.
+- For every timing claim, architecture contains a timing-measurement table: start event, end event, whether each is physical or internal, source/destination clock, ILA core, common timebase, resolution, and accepted uncertainty. Never subtract sample indices from independent ILA clock domains as an exact latency.
 - Implementation records changed modules, status, errors, fixes, commands, and evidence paths.
 - Simulation replay gives concrete GUI/batch commands, testbench/top, TC explanations, key waveform signals, pass/fail criteria, and generated logs/results.
 - Synth/impl/bitstream/ILA evidence is stored under `out/` when performed.
 - ILA/board-debug scripts live in the current unit `ila/`; captures and exports go directly to `out/ila/` or `out/hw_debug/`.
+- Before a new debug bit is built, create and review a probe plan that maps every test metric to its start/end/intermediate signals, clock domain, ILA core, trigger, capture depth/position, expected observation, and resource cost. Include all probes needed for a stated end-to-end timing claim in one planned build whenever practical.
 - Before any Vivado Hardware Manager or ILA command (`open_hw_manager`, `refresh_hw_device`, `run_hw_ila`, `upload_hw_ila_data`, `display_hw_ila_data`, `write_hw_ila_data`), the Tcl script must resolve the project root from `[info script]`, create a unit-local work directory such as `out/ila/vivado_hw_work` or `out/hw_debug/vivado_hw_work`, `cd` into it, and print that directory in the log. Also snapshot `D:/hw_ila_data_*` before the run and archive any newly-created D-root spill directories into the current unit. Vivado 2021.1 Hardware Manager can create `hw_ila_data_*` placeholders under `D:\` during refresh/upload/display even when final CSV/VCD paths are absolute. When the project provides a guarded Vivado launcher such as `AI-work/scripts/run_vivado_ila_guarded.ps1`, use that launcher instead of calling `vivado.bat -mode batch -source ...` directly.
 - Runtime artifacts are not left scattered in D: root or the project root.
 - Verified facts are copied/summarized into `guide/data-paths/*_AS_BUILT.md`; plans and failed attempts stay in `features/`.
