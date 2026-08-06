@@ -1,5 +1,5 @@
 #==============================================================================
-# Mode 5 manual simulation template
+# Mode 3 manual simulation template
 #
 # Copy into AI-work/features/<feature>/<UNIT>/sim/run_manual.tcl and customize.
 # Use when project-level SIMULATION.md says launch_simulation/direct xsim is not

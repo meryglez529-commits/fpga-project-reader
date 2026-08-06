@@ -1,168 +1,135 @@
 #==============================================================================
-# check_env.tcl — Co-work environment self-check
+# check_env.tcl -- Mode 1 non-destructive environment inspection
 #
-# Purpose:
-#   Open the project once, confirm tooling, license, and source integrity.
-#   Run this BEFORE any closed-loop edit/sim/synth iteration begins.
+# Usage:
+#   vivado -mode batch -source AI-work/scripts/check_env.tcl -tclargs \
+#       <project.xpr> <absolute-AI-work-baseline-tool-output-dir> \
+#       -log <same-dir>/vivado_check_env.log -journal <same-dir>/vivado_check_env.jou
 #
-# Usage (PowerShell):
-#   & "C:/Xilinx/Vivado/2021.1/bin/vivado.bat" -mode batch `
-#       -source AI-work/scripts/check_env.tcl `
-#       -tclargs <project.xpr> `
-#       -log    AI-work/sim_out/check_env.log `
-#       -journal AI-work/sim_out/check_env.jou
-#
-# Customize:
-#   - Set the `licensed_ips` list to the paid IP cores in this project.
-#   - Set `min_free_disk_gb` to your local policy.
+# The output directory must be under project-root/AI-work/. This script opens
+# the project read-only and writes reports only to that directory. It does not
+# prove a license is usable: synthesis/simulation execution is the evidence.
 #==============================================================================
-
-# --- knobs you may want to adjust per project -------------------------------
-set licensed_ips     {SGMII_TEMAC SGMII_PHY}   ;# ⚠️ 改成本工程的付费 IP module 名
-set min_free_disk_gb 10                          ;# 综合期间至少要的磁盘
-set max_path_chars   240                         ;# Windows 长路径警戒线
-# ----------------------------------------------------------------------------
 
 proc info_line {msg} { puts "INFO  : $msg" }
 proc warn_line {msg} { puts "WARN  : $msg" }
 proc fail_line {msg} { puts "FAIL  : $msg" }
 
+if {[llength $argv] != 2} {
+    fail_line "usage: <project.xpr> <absolute-AI-work-baseline-tool-output-dir>"
+    exit 2
+}
+
+set xpr [file normalize [lindex $argv 0]]
+set out_dir [file normalize [lindex $argv 1]]
 set fail_count 0
-proc bump_fail {} { global fail_count; incr fail_count }
+set warn_count 0
 
-# --- 1. 参数检查 -------------------------------------------------------------
-if {[llength $argv] < 1} {
-    fail_line "missing argument: <project.xpr>"
-    bump_fail
-    return
-}
-set xpr [lindex $argv 0]
 if {![file exists $xpr]} {
-    fail_line "xpr not found: $xpr"
-    bump_fail
-    return
-}
-info_line "xpr: $xpr"
-
-# --- 2. 路径长度检查（Windows）---------------------------------------------
-set abs_xpr [file normalize $xpr]
-set path_len [string length $abs_xpr]
-if {$path_len > $max_path_chars} {
-    warn_line "project path is $path_len chars (>$max_path_chars). Vivado may fail on long paths."
-} else {
-    info_line "project path length: $path_len chars (OK)"
+    fail_line "project not found: $xpr"
+    exit 2
 }
 
-# --- 3. 磁盘空间检查（粗略） ------------------------------------------------
-set drive [string range $abs_xpr 0 1]
-catch {
-    set free_bytes [exec powershell -NoProfile -Command \
-        "(Get-PSDrive ${drive}).Free"]
-    set free_gb [expr {$free_bytes / 1024.0 / 1024.0 / 1024.0}]
-    if {$free_gb < $min_free_disk_gb} {
-        warn_line [format "drive %s free space %.1f GB < %d GB threshold" \
-                          $drive $free_gb $min_free_disk_gb]
-    } else {
-        info_line [format "drive %s free space %.1f GB (OK)" $drive $free_gb]
-    }
+# Use forward slashes after normalization so this check works on Windows Tcl.
+set normalized_out [string map {\\ /} $out_dir]
+if {![regexp {(^|/)AI-work(/|$)} $normalized_out]} {
+    fail_line "refusing output outside AI-work: $out_dir"
+    exit 2
+}
+file mkdir $out_dir
+
+proc add_warn {msg} {
+    global warn_count
+    incr warn_count
+    warn_line $msg
+}
+proc add_fail {msg} {
+    global fail_count
+    incr fail_count
+    fail_line $msg
+}
+proc write_summary {path status failures warnings notes} {
+    set fp [open $path w]
+    puts $fp "status=$status"
+    puts $fp "failures=$failures"
+    puts $fp "warnings=$warnings"
+    foreach note $notes { puts $fp "note=$note" }
+    close $fp
 }
 
-# --- 4. 打开工程 -------------------------------------------------------------
-info_line "opening project ..."
-if {[catch {open_project $xpr} err]} {
-    fail_line "open_project failed: $err"
-    bump_fail
-    return
+set notes [list "xpr=$xpr" "output=$out_dir"]
+info_line "opening read-only project: $xpr"
+if {[catch {open_project -read_only $xpr} err]} {
+    add_fail "open_project failed: $err"
+    write_summary [file join $out_dir check_env.summary.txt] FAIL $fail_count $warn_count $notes
+    exit 1
 }
-info_line "vivado version: [version -short]"
-info_line "project: [current_project]"
-info_line "part: [get_property part [current_project]]"
 
-# --- 5. 顶层与文件 -----------------------------------------------------------
+lappend notes "vivado=[version -short]"
+lappend notes "project=[current_project]"
+info_line "Vivado [version -short]; project [current_project]"
+set part [get_property part [current_project]]
+lappend notes "part=$part"
+info_line "part: $part"
+
 set top [get_property top [current_fileset]]
 if {$top eq ""} {
-    fail_line "top module not set"
-    bump_fail
+    add_fail "top module is not set in current fileset"
 } else {
-    info_line "top module: $top"
+    lappend notes "top=$top"
+    info_line "top: $top"
 }
 
-set total_files [llength [get_files]]
-info_line "total source files in fileset: $total_files"
-
-# 检查文件实际存在
 set missing 0
 foreach f [get_files] {
     if {![file exists $f]} {
-        warn_line "file referenced but not on disk: $f"
+        add_warn "referenced file missing on disk: $f"
         incr missing
     }
 }
-if {$missing > 0} {
-    fail_line "$missing referenced source file(s) missing on disk"
-    bump_fail
-} else {
-    info_line "all referenced source files present"
-}
+if {$missing > 0} { add_fail "$missing referenced file(s) are missing" }
 
-# --- 6. IP 清单与状态 -------------------------------------------------------
-set ip_list [get_ips]
-info_line "ip count: [llength $ip_list]"
-foreach ip $ip_list {
-    set status [get_property IS_LOCKED $ip]
-    set ipdef  [get_property IPDEF      $ip]
-    if {$status} {
-        warn_line "IP locked (needs upgrade): $ip ($ipdef)"
-    }
-}
-
-# --- 7. License 检查（针对付费 IP） ----------------------------------------
-foreach lic_ip $licensed_ips {
-    set hits [get_ips -quiet $lic_ip]
-    if {[llength $hits] == 0} {
-        info_line "licensed-ip skipped (not present): $lic_ip"
-        continue
-    }
-    # 用 report_property 看 IP 是否能正常读到 IPDEF（间接代表 license 没炸）
-    set ipdef [get_property IPDEF [lindex $hits 0]]
-    if {$ipdef eq ""} {
-        fail_line "licensed IP not resolvable, possible license issue: $lic_ip"
-        bump_fail
-    } else {
-        info_line "licensed IP OK: $lic_ip ($ipdef)"
-    }
-}
-
-# 显式查 license 特性（部分 license 在 update_compile_order 时才报错）
 if {[catch {update_compile_order -fileset sources_1} err]} {
-    fail_line "update_compile_order failed: $err"
-    bump_fail
+    add_fail "update_compile_order failed: $err"
 } else {
-    info_line "update_compile_order OK"
+    report_compile_order -fileset sources_1 -used_in synthesis -file [file join $out_dir compile_order.rpt]
 }
 
-# --- 8. Compile order ------------------------------------------------------
-info_line "==== compile order (top first) ===="
-foreach f [get_files -compile_order sources -used_in synthesis] {
-    puts "  $f"
+set xdc_files [get_files -quiet -filter {FILE_TYPE == XDC}]
+if {[llength $xdc_files] == 0} {
+    add_warn "no XDC file reported by the project"
 }
+set xdc_fp [open [file join $out_dir constraints.txt] w]
+foreach xdc $xdc_files { puts $xdc_fp $xdc }
+close $xdc_fp
 
-# --- 9. 约束文件 -----------------------------------------------------------
-set xdc_files [get_files -filter {FILE_TYPE == XDC}]
-info_line "xdc files: [llength $xdc_files]"
-foreach f $xdc_files {
-    info_line "  $f"
+set ip_repos [get_property ip_repo_paths [current_project]]
+set repo_fp [open [file join $out_dir ip_repositories.txt] w]
+foreach repo $ip_repos {
+    puts $repo_fp $repo
+    if {![file isdirectory $repo]} { add_warn "configured IP repository is missing: $repo" }
 }
+close $repo_fp
 
-# --- 10. 收尾 --------------------------------------------------------------
+set ip_list [get_ips -quiet]
+foreach ip $ip_list {
+    if {[get_property IS_LOCKED $ip]} { add_warn "IP locked: $ip" }
+    if {[get_property IPDEF $ip] eq ""} { add_warn "IPDEF unavailable: $ip" }
+}
+if {[catch {report_ip_status -file [file join $out_dir ip_status.rpt]} err]} {
+    add_warn "report_ip_status failed: $err"
+}
+add_warn "license is not proven by this inspection; run the relevant simulation/synthesis stage"
+
 close_project
-
 if {$fail_count > 0} {
-    puts ""
-    fail_line "check_env finished with $fail_count failure(s). 修复后再继续 setup。"
-    exit 1
+    set status FAIL
+} elseif {$warn_count > 0} {
+    set status DEGRADED
 } else {
-    puts ""
-    info_line "check_env PASS. 工程可被 AI 安全打开，可进入闭环准备。"
-    exit 0
+    set status PASS
 }
+write_summary [file join $out_dir check_env.summary.txt] $status $fail_count $warn_count $notes
+puts "RESULT: $status (failures=$fail_count warnings=$warn_count)"
+if {$fail_count > 0} { exit 1 }
+exit 0

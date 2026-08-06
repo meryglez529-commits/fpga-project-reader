@@ -1,199 +1,110 @@
 ---
 name: fpga-cowork
-description: Read, map, annotate, prepare, and co-develop FPGA/RTL projects. Use when Codex needs to inspect Vivado/Quartus projects, identify top modules and main business data links, create an FPGA_PROJECT_GUIDE, deep-read one selected data path, close-read or annotate one RTL/source file, set up an `AI-work/` collaboration environment, document project-specific Vivado simulation constraints, or develop a new FPGA feature through requirements, architecture, RTL, simulation, synthesis/implementation/bitstream, ILA/board-debug evidence, and as-built handoff. Triggers include "读这个工程""接手这个项目""精读""细读""读某条通路""注释这个文件""搭建协作环境""搭一下 AI-work""准备闭环""协作环境""跑通这个工程""开发新功能""加一条通路""实现这个功能""做仿真复现""整理交付""上板验证""ILA 调试"。
+description: Read, prepare, annotate, and co-develop FPGA/RTL projects safely. Use when Codex needs to take over or inspect a Vivado/Quartus project, establish an `AI-work/` collaboration foundation, map and deep-read its main data paths, close-read or annotate RTL, document project-specific simulation behavior, or deliver a feature through RTL, verification, build, and board-debug evidence. Triggers include "读这个工程" "接手这个项目" "精读" "细读" "读某条通路" "注释这个文件" "搭建协作环境" "搭一下 AI-work" "准备闭环" "协作环境" "跑通这个工程" "开发新功能" "加一条通路" "实现这个功能" "做仿真复现" "整理交付" "上板验证" "ILA 调试".
 ---
 
-# FPGA Cowork
+# FPGA Co-work
 
-Use this skill to make an unfamiliar FPGA project understandable and safe to collaborate on. The core rule is:
+Use this skill as a controlled collaboration workflow. It has **three user-facing modes**. The first mode is the common foundation for a new FPGA project; do not treat an existing but partial `AI-work/` directory as proof that the foundation is ready.
 
-**Find the real business data links first. Keep stable facts in `guide/`. Keep new-feature process, evidence, logs, scripts, and debug history in `features/`.**
+## Mode routing
 
-## Operating Modes
-
-| Mode | When to use | Default output | Required references |
+| Mode | Use when | Required outcome | Read first |
 |---|---|---|---|
-| Mode 1 - Whole-project map | User asks to read or take over an unfamiliar FPGA project, identify top modules, classify data links, or create a guide. | `AI-work/guide/FPGA_PROJECT_GUIDE.md` organized by real data links. | `references/reading-workflow.md`, `references/output-format.md` |
-| Mode 2 - Selected-path deep read | User asks to deep-read/精读/细读 one named data link. | Path-specific code-reading guide under `AI-work/guide/data-paths/`. | `references/data-path-deep-reading.md`, `examples/dac-output-data-path-deep-reading.md` |
-| Mode 3 - Single-file close read / annotation | User names one RTL/source file and asks to read, explain, annotate, comment, or compare it. | Source-file comments when requested, plus a pointer/diff record in `AI-work/annotations/`. | `references/single-file-close-reading.md` |
-| Mode 4 - Co-work environment setup | User asks to set up `AI-work`, prepare safe closed-loop sim/synth, "跑通环境", or document toolchain constraints. | `AI-work/env/*.md`, project-level simulation SOP, scripts under `AI-work/scripts/`, successful environment check, confirmed `RULES.md`. | `references/cowork-environment-setup.md`, `references/simulation-environment.md` |
-| Mode 5 - Feature development | User asks to implement, change, verify, synthesize, board-debug, or hand off a concrete feature. | One staged work package under `AI-work/features/<feature-slug>/<UNIT>/`: `REQUIREMENTS.md`, `ARCHITECTURE.md`, `IMPLEMENTATION.md`, `sim/SIM_REPLAY.md`, evidence under `out/`, and as-built guide update when verified. | `references/feature-development.md` |
+| **Mode 1 — 工程接手与协作基础** | Taking over, reading, preparing, or repairing an FPGA project / `AI-work/`; request mentions project map, data paths, environment, closed loop, simulation, synthesis, bitstream, or ILA readiness. | A trusted, resumable foundation: project map, deep-reading notes for every identified main business data path, project-specific environment/SOP, baseline evidence, capability inventory, and readiness state. | `references/ai-work-bootstrap.md`, `references/reading-workflow.md`, `references/data-path-deep-reading.md`, `references/foundation-setup.md`, `references/simulation-environment.md`, `references/output-format.md` |
+| **Mode 2 — 单文件阅读与注释** | User names a source file and asks to explain, read closely, annotate, comment, or compare it. | A source-preserving annotation plus its transitive instantiated user-RTL closure and an annotation manifest. | `references/single-file-close-reading.md` |
+| **Mode 3 — 功能开发与板级调试** | User asks to add/change/fix/verify a concrete feature, synthesize, implement, generate a bitstream, debug board behavior, or hand off a change. | One staged unit under `AI-work/features/<feature>/<UNIT>/`, with requirements through as-built evidence. | `references/feature-development.md` |
 
-Mode 4 repairs the road. Mode 5 drives on it. Do not begin RTL edits, IP changes, simulation iterations, synthesis, implementation, bitstream, or board-debug automation until Mode 4 is complete, `RULES.md` is confirmed, and the work is tracked by a Mode 5 unit.
+Mode 1 repairs the road; Mode 3 drives on it. Mode 2 is a source-reading operation, not a shortcut around Mode 3 implementation controls.
 
-### Mode 5A - Board-debug iteration without RTL change
+## Global custody rule
 
-Use this constrained Mode 5 path only when all of the following are true:
+All files created by AI belong under the project-root `AI-work/` tree. This includes scripts, testbenches, logs, journals, simulator outputs, reports, waveforms, CSV/VCD/WDB, bit/LTX copies, ILA captures, and generated documentation. The sole exception is an **explicitly authorized Mode 3 change** to an existing design source, constraint, IP, or project file in its original engineering location.
 
-- A current Mode 5 unit, qualified bitstream/LTX pair, and board-debug evidence already exist.
-- The requested work is limited to register setup/readback, ILA/VIO capture, scope correlation, or diagnosis of the existing image.
-- No RTL, XDC, IP, project, simulation, synthesis, implementation, or bitstream change is made.
+Do not create an AI artifact in the project root, a drive root, a temporary directory, or a tool default directory. Give every Vivado and simulator command an explicit `AI-work/` unit-local working directory, log, journal, and export path. If a tool nevertheless spills a newly created artifact elsewhere, archive it into the current `AI-work/` unit and record the source path and cause; do not delete or move pre-existing user artifacts.
 
-Reuse the existing unit. Do not repeat simulation or implementation preflight. Before the run, record the qualified bit/LTX identity, parameter manifest, trigger/capture plan, and unit-local artifact marker. Save the capture and conclusion under that unit, then append `AI-work/LOG.md`. If the current probes cannot answer the question, stop Mode 5A and return to full Mode 5 before changing debug probes or generating a new bitstream. See `references/feature-development.md` sections 0 and 7.
+Append one line to `AI-work/LOG.md` for every meaningful state transition and record unresolved facts in `AI-work/OPEN-QUESTIONS.md`.
 
-## Stage 0: AI-work Bootstrap
+## Mode 1 — 工程接手与协作基础
 
-Every mode starts by ensuring `AI-work/` exists at the project root. If it is missing or incomplete, create or repair the skeleton from `references/ai-work-bootstrap.md`.
+### Trigger and idempotence
 
-Minimal skeleton:
+Enter or repair Mode 1 when `AI-work/` is missing, incomplete, internally contradictory, stale relative to RTL/XDC/IP/tool/board changes, or lacks evidence for the requested baseline capability. A directory alone is not completion. Inspect `env/SETUP_STATUS.md` and its manifest first, then run only the invalidated stages.
+
+Mode 1 creates a baseline that makes later cooperation safe. It is **not** feature development:
+
+- Do not modify RTL, XDC, IP, block designs, project settings, or user build runs.
+- Do not add ILA probes or generate a debug image.
+- Do not write business registers, start a scan, or operate the user's instrument.
+- Physical programming, JTAG connection, and a non-invasive existing-ILA inventory are optional and require explicit user authorization for that session. Tcl programming is permitted only after that authorization and must not trigger product behavior.
+
+### Required foundation outputs
 
 ```text
 AI-work/
-├── README.md
-├── LOG.md
-├── OPEN-QUESTIONS.md
-├── .gitignore
-├── guide/
-│   ├── data-paths/
-│   └── diagrams/
-├── annotations/
-├── env/
-├── features/
-├── scripts/
-├── sim/
-├── sim_out/
-└── reports/
+  guide/FPGA_PROJECT_GUIDE.md
+  guide/data-paths/<DL*>_DEEP_READ.md
+  env/ENVIRONMENT.md
+  env/HARDWARE.md
+  env/SIMULATION.md                 # canonical SOP or a clear pointer to guide/VIVADO_SIM_SOP.md
+  env/DEBUG_CAPABILITY.md
+  env/SETUP_STATUS.md
+  env/RULES.md
+  env/SNAPSHOTS.md
+  env/GLOSSARY.md
+  scripts/
+  reports/baseline/<baseline-id>/
 ```
 
-Append one line to `AI-work/LOG.md` for every skill invocation or meaningful state transition. Add unresolved facts to `OPEN-QUESTIONS.md`.
+The setup state records target profile (project/top/part/XDC/board/runs/bit/LTX), source/build fingerprint, exact commands, timestamps, log locations, result, failure cause, next action, and evidence links. Use explicit statuses such as `DISCOVERED`, `BASELINE_PROTECTED`, `TOOL_CHECKED`, `SIM_READY`/`SIM_BLOCKED`, `BUILD_READY`/`BUILD_BLOCKED`, `DEBUG_READY`/`DEBUG_UNAVAILABLE`, `BOARD_READY`/`READY_NO_BOARD`, `RULES_CONFIRMED`, and `READY`.
 
-## Default Flow
+### Baseline closed loop
 
-When the user hands over a new project without specifying a mode:
+Run a minimal, project-specific baseline through **simulation smoke → synthesis → implementation → bitstream**, whenever the project/tool/license allows it. This proves the workflow only; it is not a functional regression or timing sign-off. Record each unavailable stage as `BLOCKED` with evidence instead of pretending it passed.
 
-1. Stage 0 - bootstrap `AI-work/`.
-2. Mode 1 - create the whole-project map. Stop and ask whether to deep-read one main path.
-3. Mode 2 - deep-read the selected/highest-throughput main path. Stop and ask whether to set up the co-work environment.
-4. Mode 4 - set up environment, simulation SOP, scripts, rollback, and `RULES.md`; wait for explicit user confirmation.
-5. Mode 5 - only after an explicit feature/change request.
-6. Mode 3 - only when the user names a file for close reading or annotation.
+Protect the baseline before running anything: capture Git revision and dirty state, or source/XDC/IP hashes if Git is unavailable. Never run `git init`, `git add`, `git commit`, `git reset --hard`, overwrite `synth_1`/`impl_1`, or silently reuse a dirty user run. Use a separate AI-owned baseline run/output directory. If Vivado cannot isolate generated outputs in `AI-work/`, stop with `BUILD_ISOLATION_BLOCKED` rather than spilling output into the project or a drive root.
 
-Do not silently chain past a stage boundary without explicit user intent such as "继续".
+For simulation, record the actually verified project-specific command path, including known failed paths and their evidence. Do not generalize a workaround across projects or mutate the Vivado installation without explicit authorization and a restoration plan. See `references/simulation-environment.md`.
 
-## Cross-Mode Boundaries
+Inventory existing debug capability without changing it: qualified bit/LTX identity, ILA/VIO core names, clocks, depth, probes, expected JTAG target, and observed availability. Existing ILA cannot prove a missing measurement; record that gap for Mode 3.
 
-- `guide/` stores stable facts: whole-project maps, deep-reading guides, as-built data-link facts, diagrams.
-- `features/` stores process: requirements, architecture alternatives, implementation progress, tests, logs, scripts, synth/impl/bitstream/ILA evidence.
-- `env/` stores project-level collaboration facts: toolchain, hardware, rules, rollback, focus, glossary, simulation SOP.
-- `annotations/` stores single-file reading/commenting records. If a later feature changes that file, the feature package must note whether the annotation became stale.
+### Mode 1 gate
 
-Do not use one document as both a plan and a verified fact record.
+Before Mode 3 begins, `SETUP_STATUS.md` and the baseline manifest must show:
 
-## Quick Workflow
+- Project root, `.xpr`/top/part/constraints, source and build provenance, and dirty-baseline handling are recorded.
+- `FPGA_PROJECT_GUIDE.md` and a deep-read guide exist for each identified main business data path, or the excluded path is justified.
+- Simulation SOP identifies one canonical entry point and separates known-good, blocked, and unverified flows.
+- Tool/IP/constraint inspection is evidence-backed; warning-level IP repository or license uncertainty is `DEGRADED`, never a clean pass.
+- Every baseline stage is `PASS`, `BLOCKED`, or intentionally `NOT_RUN`, with logs under `AI-work/reports/baseline/`.
+- Existing ILA/debug capability and board availability are recorded without claiming that a board is connected when it is not.
+- `RULES.md` is explicit and confirmed; `scripts/validate-ai-work.py` and `scripts/validate-foundation.py` pass at the selected strictness.
 
-1. **Boundary before internals.** Locate project files, top module, top ports, constraints, BD/IP, and source roots before reading `always` blocks.
-2. **Question ledger first.** Convert unknowns into narrow searches using `rg -n -C 3` to `-C 10`; record evidence paths, line numbers, confidence, and residual risk.
-3. **Identify main data links by semantics.** Ethernet, DDR, PCIe, SFP, and QSPI may be support or main links; decide from business data, throughput, endpoints, and module contracts.
-4. **Tie clocks/control/storage to links.** Explain clocks, resets, CDC, FIFOs, DDR, control registers, and debug resources in relation to the data link they constrain.
-5. **Use the right output shape.** Whole-project guide, selected-path reading guide, single-file annotation, environment setup, and feature work package are different deliverables.
-6. **Keep runtime artifacts contained.** New `vivado*.log`, `.jou`, `xsim.dir`, `xvlog.pb`, `.wdb`, CSV, reports, bitstream logs, and `hw_ila_data_*` belong in the current `AI-work/` location, not D: root or the project root.
+## Mode 2 — 单文件阅读与注释
 
-## Mode-Specific Gate Summary
+First trace the selected module's directly instantiated **user RTL** modules, then recursively trace their instantiated user RTL modules until a leaf, generated/IP, primitive, or third-party boundary. Annotate this transitive closure when annotation is requested. Do not edit generated/IP/third-party sources; record their interface contract and boundary instead. If one source is instantiated multiple times, annotate it once and list every instance site.
 
-### Mode 1 Gate
+Before each edit, detect and record its encoding and newline convention (UTF-8/BOM, GBK/GB18030, CRLF/LF). Preserve both exactly; comments must use the file's existing language/style. Verify after editing that only comment text changed: ports, module names, logic, and functional bytes must be unchanged. Write `AI-work/annotations/<scope>_ANNOTATION_MANIFEST.md` with files, dependency closure, encoding/newline checks, instances, untouched boundaries, and diff rationale.
 
-- Main data links are identified by business semantics.
-- Tables from `references/output-format.md` are present.
-- Generated or runtime files are treated as evidence stores, not source.
-- Feature/package index points to active `AI-work/features/*` units if they exist.
-- All unsupported inferences are marked `> ⚠️ 待确认` and copied to `OPEN-QUESTIONS.md`.
+If analysis discovers a bug or needed behavior change, record it and enter Mode 3; never silently implement the change in Mode 2.
 
-### Mode 2 Gate
+## Mode 3 — 功能开发与板级调试
 
-A selected-path deep read is not acceptable as a plain summary. Each major "open this file" pass must include:
+Create one unit under `AI-work/features/<feature-slug>/<UNIT>/` before modifying design files. Keep requirements, architecture, implementation, RTL review, simulation, synthesis, implementation, bitstream, ILA, board evidence, and copies of generated assets inside that unit. The Global custody rule is a completion condition, not a suggestion.
 
-```text
-本步目标
-搜索入口
-本模块相关信号
-先忽略
-代码阅读顺序
-读完应能回答
-下一步
-```
+Use the complete workflow in `references/feature-development.md`: requirements → architecture → RTL → simulation → synthesis → implementation/bitstream → board evidence → as-built handoff. Before a new debug build, review every ILA probe, width, clock domain, trigger, capture depth, expected event rate, and exact claim it can support. Independent clock-domain ILAs do not establish an exact cross-domain latency; use a common observation clock or a dedicated timestamp/handshake design when that claim is required.
 
-Run `scripts/validate-deep-reading-guide.py` when available. Mode 2 can propose sim/ILA signal groups, but execution and evidence belong to Mode 5.
+### Existing-image board-debug branch
 
-### Mode 3 Gate
+Use this light Mode 3 branch only when a current unit and a qualified existing bit/LTX pair already exist. It permits parameter application/readback, ILA/VIO capture, scope correlation, and diagnosis. It does not permit RTL/XDC/IP/project edits, new debug probes, simulation, implementation, or bitstream generation. Record bit/LTX identity, parameter manifest, capture plan, evidence, and conclusion in the existing unit. Missing probes or a changed image return to the complete Mode 3 workflow.
 
-- Identify upstream producer, downstream consumer, role in the business link, data model, dimensions, packing units, and valid/enable contract before commenting.
-- Add teaching comments at section boundaries and non-obvious contracts, not line-by-line syntax.
-- Do not change functional RTL unless the user explicitly asks for a fix; switch to Mode 5 for fixes.
-- Record the file, rationale, and version/diff note in `AI-work/annotations/`.
+## Reference routing and discipline
 
-### Mode 4 Gate
+- Bootstrap or repair: `references/ai-work-bootstrap.md`.
+- Whole project map: `references/reading-workflow.md`, then `references/output-format.md`.
+- Main data-path deep read: `references/data-path-deep-reading.md`; use `examples/dac-output-data-path-deep-reading.md` as the format example.
+- Foundation: `references/foundation-setup.md`, then `references/simulation-environment.md`.
+- Single-file closure annotation: `references/single-file-close-reading.md`.
+- Feature work and board debug: `references/feature-development.md`; copy `assets/feature-work-package/` into the unit rather than editing the assets in place.
 
-Before declaring environment setup complete:
-
-- `ENVIRONMENT.md`, `HARDWARE.md`, `RULES.md`, `FOCUS.md`, `SNAPSHOTS.md`, `GLOSSARY.md`, and `SIMULATION.md` (or an explicitly linked project-level `VIVADO_SIM_SOP.md`) exist and contain real project facts.
-- Baseline and rollback command are recorded; rollback is drilled once.
-- Scripts are generated/customized under `AI-work/scripts/`.
-- `check_env.tcl` is run once or the blocker is explicitly documented.
-- Project-level simulation SOP states which batch/GUI paths work, which fail, and why.
-- User explicitly confirms `RULES.md`; log the confirmation.
-- Run `scripts/validate-ai-work.py` and `scripts/validate-simulation-sop.py` when available.
-
-### Mode 5 Gate
-
-A feature unit is not acceptable if it only says "done" or "PASS". The unit must track the feature through stages:
-
-```text
-<UNIT>/
-├── REQUIREMENTS.md
-├── ARCHITECTURE.md
-├── IMPLEMENTATION.md
-├── RTL_REVIEW.md              # required for broad/multi-file changes
-├── sim/
-│   ├── SIM_REPLAY.md
-│   ├── run_manual.tcl
-│   └── run_gui.tcl
-├── synth/                     # if synthesis is part of this unit
-├── impl/                      # if implementation/bitstream is part of this unit
-├── ila/                       # if board/ILA debug is part of this unit
-└── out/
-    ├── sim/
-    ├── regression/
-    ├── synth/
-    ├── impl/
-    ├── bitstream/
-    ├── ila/
-    └── hw_debug/
-```
-
-Required stage checks:
-
-- Requirements are confirmed before RTL work begins.
-- Architecture explains data path, trigger/control path, CDC, FIFO/storage, old-behavior preservation, constraints, and verification strategy.
-- For every timing claim, architecture contains a timing-measurement table: start event, end event, whether each is physical or internal, source/destination clock, ILA core, common timebase, resolution, and accepted uncertainty. Never subtract sample indices from independent ILA clock domains as an exact latency.
-- Implementation records changed modules, status, errors, fixes, commands, and evidence paths.
-- Simulation replay gives concrete GUI/batch commands, testbench/top, TC explanations, key waveform signals, pass/fail criteria, and generated logs/results.
-- Synth/impl/bitstream/ILA evidence is stored under `out/` when performed.
-- ILA/board-debug scripts live in the current unit `ila/`; captures and exports go directly to `out/ila/` or `out/hw_debug/`.
-- Before a new debug bit is built, create and review a probe plan that maps every test metric to its start/end/intermediate signals, clock domain, ILA core, trigger, capture depth/position, expected observation, and resource cost. Include all probes needed for a stated end-to-end timing claim in one planned build whenever practical.
-- Before any Vivado Hardware Manager or ILA command (`open_hw_manager`, `refresh_hw_device`, `run_hw_ila`, `upload_hw_ila_data`, `display_hw_ila_data`, `write_hw_ila_data`), the Tcl script must resolve the project root from `[info script]`, create a unit-local work directory such as `out/ila/vivado_hw_work` or `out/hw_debug/vivado_hw_work`, `cd` into it, and print that directory in the log. Also snapshot `D:/hw_ila_data_*` before the run and archive any newly-created D-root spill directories into the current unit. Vivado 2021.1 Hardware Manager can create `hw_ila_data_*` placeholders under `D:\` during refresh/upload/display even when final CSV/VCD paths are absolute. When the project provides a guarded Vivado launcher such as `AI-work/scripts/run_vivado_ila_guarded.ps1`, use that launcher instead of calling `vivado.bat -mode batch -source ...` directly.
-- Runtime artifacts are not left scattered in D: root or the project root.
-- Verified facts are copied/summarized into `guide/data-paths/*_AS_BUILT.md`; plans and failed attempts stay in `features/`.
-- Run `scripts/validate-feature-work-package.py` and `scripts/scan-artifact-spill.py` when available.
-
-## References
-
-- Read `references/ai-work-bootstrap.md` when bootstrapping or repairing `AI-work/`.
-- Read `references/reading-workflow.md` for Mode 1.
-- Read `references/output-format.md` for `FPGA_PROJECT_GUIDE.md`.
-- Read `references/data-path-deep-reading.md` for Mode 2.
-- Read `references/single-file-close-reading.md` for Mode 3.
-- Read `references/cowork-environment-setup.md` and `references/simulation-environment.md` for Mode 4.
-- Read `references/feature-development.md` for Mode 5.
-- Read `references/diagram-guidelines.md` before creating or replacing diagrams.
-- Use `examples/dac-output-data-path-deep-reading.md` as the canonical Mode 2 code-reading guide example.
-- Use `assets/feature-work-package/` as the Mode 5 template source; copy templates into a unit and customize them. Do not edit assets in place.
-- Use `scripts/templates/*.tcl` as project-level Tcl template sources; copy and customize per project or unit.
-
-## Discipline
-
-- Do not modify RTL during Mode 1/2/3 reading unless the user explicitly asks for a fix, in which case switch to Mode 5.
-- Do not bulk-read generated Vivado/Quartus files. Query exact evidence windows.
-- Prefer source files, constraints, BD/IP metadata, and project scripts before generated netlists, cache XML, run outputs, or simulator libraries.
-- Do not scatter Markdown guides, diagrams, scripts, logs, reports, or ILA data outside `AI-work/`.
-- Do not claim simulation/synthesis/board verification is complete unless evidence is stored and the user can reproduce or review it from the unit package.
-- Mark unsupported inferences as `> ⚠️ 待确认` and copy them into `OPEN-QUESTIONS.md`.
+Never claim a check passed without command output or board evidence. Never expose credentials, license keys, or private network data in `AI-work/`. Do not overwrite or delete user work; stop and request direction if separation is impossible.
