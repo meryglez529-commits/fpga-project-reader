@@ -19,6 +19,19 @@ Prerequisites:
 
 If requirements are unclear, write questions in `REQUIREMENTS.md` and ask the user. Do not start RTL.
 
+### 0.1 Board-debug iteration (Mode 5A)
+
+Use Mode 5A only for an already-qualified image and an already-existing unit. It covers parameter application/readback, ILA/VIO capture, scope correlation, and diagnosis; it does not authorize RTL, XDC, IP, project, simulation, implementation, or bitstream changes.
+
+Before a Mode 5A run, record in `IMPLEMENTATION.md` or a unit-local board-debug note:
+
+- exact bitstream and LTX identity;
+- parameter manifest and readback addresses;
+- target signals, clocks, trigger condition, capture depth/position, and expected observation;
+- unit-local `out/.artifact_start` marker.
+
+Export evidence under the existing unit and append `AI-work/LOG.md`. If the desired measurement needs a missing probe, a different ILA clock, or a new bitstream, return to full Mode 5 and complete the probe review before building.
+
 ## 1. Work Package Layout
 
 Default layout:
@@ -123,6 +136,17 @@ For nontrivial changes, include:
 | Old-mode preservation | State exactly what should be identical when mode is off |
 | Timing/FIFO analysis | Include formulas or measured constraints |
 | Verification strategy | TC groups, key waveform groups, synth/ILA checks |
+
+For every timing requirement, add a timing-measurement table before RTL or debug-probe edits:
+
+| Metric | Start event | End event | Physical/internal | Source/destination clock | Capture core | Common timebase? | Resolution / uncertainty | Evidence type |
+|---|---|---|---|---|---|---|---|---|
+
+Rules:
+
+- A timing difference is exact only when both events are sampled by the same clocked capture, or by a verified common timestamp/cross-trigger design.
+- Separate ILA captures may prove event ordering, periodicity, or functional continuity; label them as correlated evidence, not an exact latency.
+- For asynchronous physical inputs, state sampling quantization and synchronizer-induced phase uncertainty even when both debug signals share a later clock domain.
 
 Gate:
 
@@ -234,6 +258,13 @@ Rules:
 - Put ILA/VIO scripts in the unit's `ila/`.
 - Export CSV/log data directly to `out/ila/` or `out/hw_debug/`.
 - Record scenario, register setup, trigger condition, result file, and conclusion.
+- Before any new debug build, add a probe-review table to `ARCHITECTURE.md` or `IMPLEMENTATION.md` and review it against every requested metric:
+
+| Metric | Start/end/intermediate probes | Clock domain | ILA core | Trigger | Depth / position | Expected observation | Existing bit sufficient? | Resource impact |
+|---|---|---|---|---|---|---|---|---|
+
+- For an end-to-end claim, place both timing endpoints in one clocked capture whenever practical. If that is impossible, define a common timestamp/cross-trigger method or explicitly limit the conclusion to correlated functional evidence.
+- Consolidate all approved metrics into the same probe-review pass before a long implementation run. Do not add only the immediate failing signal if a pending requirement will otherwise force another debug bit.
 - Before Hardware Manager commands, make scripts `cd` into a unit-local work directory and print it in the log.
 - Snapshot `D:/hw_ila_data_*` before Vivado Hardware Manager work; after the run, archive only newly-created D-root `hw_ila_data_*` spill directories into the unit's `out/ila/` or `out/hw_debug/` and record the move. Vivado 2021.1 can emit these placeholders during ILA refresh/upload/display even when CSV/VCD outputs use absolute unit-local paths.
 
