@@ -12,10 +12,19 @@ Use this skill as a controlled collaboration workflow. It has **three user-facin
 | Mode | Use when | Required outcome | Read first |
 |---|---|---|---|
 | **Mode 1 — 工程接手与协作基础** | Taking over, reading, preparing, or repairing an FPGA project / `AI-work/`; request mentions project map, data paths, environment, closed loop, simulation, synthesis, bitstream, or ILA readiness. | A trusted, resumable foundation: project map, deep-reading notes for every identified main business data path, project-specific environment/SOP, baseline evidence, capability inventory, and readiness state. | `references/ai-work-bootstrap.md`, `references/reading-workflow.md`, `references/data-path-deep-reading.md`, `references/foundation-setup.md`, `references/simulation-environment.md`, `references/output-format.md` |
-| **Mode 2 — 单文件阅读与注释** | User names a source file and asks to explain, read closely, annotate, comment, or compare it. | A source-preserving annotation plus its transitive instantiated user-RTL closure and an annotation manifest. | `references/single-file-close-reading.md` |
+| **Mode 2 — 单文件精读 / 注释** | User names a source file and asks to explain, read closely, annotate, comment, or compare it. | **Read-only request** (`解释` / `精读` / `比较`): evidence-backed explanation only; do not edit RTL. **Explicit annotation request** (`注释` / `添加注释` / `用 Mode 2 注释`): source-preserving comments for the selected source **and its full transitive active user-RTL instantiation closure**, plus an annotation manifest. | `references/single-file-close-reading.md` |
 | **Mode 3 — 功能开发与板级调试** | User asks to add/change/fix/verify a concrete feature, synthesize, implement, generate a bitstream, debug board behavior, or hand off a change. | One staged unit under `AI-work/features/<feature>/<UNIT>/`, with requirements through as-built evidence. | `references/feature-development.md` |
 
 Mode 1 repairs the road; Mode 3 drives on it. Mode 2 is a source-reading operation, not a shortcut around Mode 3 implementation controls.
+
+### Mode 2 request boundary (mandatory)
+
+Classify the request before opening source files:
+
+- **Read-only close reading**: Requests to explain, inspect, deep-read, or compare RTL do **not** authorize source edits. Trace only the hierarchy needed to support the explanation, identify active versus commented-out instances, and state the evidence boundary. Do not create an annotation manifest or claim annotation closure.
+- **Explicit annotation**: Requests containing `注释`, `添加注释`, `comment the module`, or `用 Mode 2 注释` authorize comment-only edits. Resolve the selected module's full transitive **active user-RTL** instantiation closure before the first edit. Annotate every editable closure member exactly once; record IP, primitive, generated, encrypted, third-party, missing, ambiguous, and commented-out boundaries in one manifest. Annotating only the root is incomplete.
+
+If the wording is ambiguous, ask whether the user wants read-only explanation or full closure annotation. Never infer annotation authority from a request to explain a file.
 
 ## Global custody rule
 
@@ -80,11 +89,19 @@ Before Mode 3 begins, `SETUP_STATUS.md` and the baseline manifest must show:
 - Existing ILA/debug capability and board availability are recorded without claiming that a board is connected when it is not.
 - `RULES.md` is explicit and confirmed; `scripts/validate-ai-work.py` and `scripts/validate-foundation.py` pass at the selected strictness.
 
-## Mode 2 — 单文件阅读与注释
+## Mode 2 — 单文件精读 / 注释
 
-First trace the selected module's directly instantiated **user RTL** modules, then recursively trace their instantiated user RTL modules until a leaf, generated/IP, primitive, or third-party boundary. Annotate this transitive closure when annotation is requested. Do not edit generated/IP/third-party sources; record their interface contract and boundary instead. If one source is instantiated multiple times, annotate it once and list every instance site.
+Choose one path using the mandatory request boundary above.
 
-Before each edit, detect and record its encoding and newline convention (UTF-8/BOM, GBK/GB18030, CRLF/LF). Preserve both exactly; comments must use the file's existing language/style. Verify after editing that only comment text changed: ports, module names, logic, and functional bytes must be unchanged. Write `AI-work/annotations/<scope>_ANNOTATION_MANIFEST.md` with files, dependency closure, encoding/newline checks, instances, untouched boundaries, and diff rationale.
+### Read-only close reading
+
+Do not edit RTL. Trace the selected source and the minimum active hierarchy needed for an evidence-backed explanation; distinguish active instances from commented-out historical code and identify generated/IP/primitive/third-party boundaries when relevant. State that this is read-only and do not present it as an annotation closure.
+
+### Explicit annotation closure
+
+Before the first edit, trace the selected module's directly instantiated **active user RTL** modules, then recursively trace their instantiated active user RTL modules until a leaf, generated/IP, primitive, encrypted, third-party, missing, or ambiguous boundary. Annotate the full editable transitive closure; do not stop at the root. Do not edit generated/IP/third-party sources; record their interface contract and boundary instead. If one source is instantiated multiple times, annotate it once and list every instance site. Commented-out instances are historical context, not closure members.
+
+For explicit annotation, before each edit detect and record its encoding and newline convention (UTF-8/BOM, GBK/GB18030, CRLF/LF). Preserve both exactly; comments must use the file's existing language/style. A source that can be decoded and re-encoded byte-for-byte as GB18030 is safe to annotate with GB18030, even if its historical text appears to contain mixed legacy encodings. Use GB18030 consistently for new comments in that file and retain its original BOM and line endings. Stop only when no single encoding can make a lossless byte round trip, or when the available writer cannot prove it preserves all non-comment bytes. Verify after editing that only comment text changed: ports, module names, logic, and functional bytes must be unchanged. Write `AI-work/annotations/<scope>_ANNOTATION_MANIFEST.md` with files, dependency closure, encoding/newline checks, instances, untouched boundaries, and diff rationale.
 
 If analysis discovers a bug or needed behavior change, record it and enter Mode 3; never silently implement the change in Mode 2.
 
