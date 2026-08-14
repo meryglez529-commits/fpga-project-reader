@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Validate the fpga-cowork AI-work skeleton and Mode 1 entry documents.
+"""Validate the mode-neutral fpga-cowork AI-work skeleton.
 
-Use validate-foundation.py as the companion evidence check. This script keeps
-the bootstrap check readable and accepts either canonical simulation-SOP path.
+Run a mode-specific validator for Mode 1 foundations, Mode 3 feature units, or
+Mode 4 new-board work packages. Partial env/ or bringup/ content must not make
+this common bootstrap validator silently select a mode.
 """
 
 from __future__ import annotations
@@ -14,14 +15,9 @@ from pathlib import Path
 
 
 REQUIRED_DIRS = (
-    "guide", "guide/data-paths", "guide/diagrams", "annotations", "env",
-    "features", "scripts", "reports", "reports/baseline",
+    "guide", "annotations", "env", "features", "bringup", "scripts", "reports",
 )
 REQUIRED_TOP = ("README.md", "LOG.md", "OPEN-QUESTIONS.md", ".gitignore")
-FOUNDATION_DOCS = (
-    "env/ENVIRONMENT.md", "env/HARDWARE.md", "env/DEBUG_CAPABILITY.md",
-    "env/SETUP_STATUS.md", "env/RULES.md", "env/SNAPSHOTS.md", "env/GLOSSARY.md",
-)
 PLACEHOLDER = re.compile(r"<[^>]*(?:TBD|TODO|YYYY|填写|待确认)[^>]*>", re.IGNORECASE)
 
 
@@ -50,27 +46,12 @@ def validate(ai_work: Path) -> tuple[list[str], list[str]]:
         elif not path.stat().st_size:
             errors.append(f"empty file: AI-work/{name}")
 
-    attempted = any((ai_work / name).is_file() for name in FOUNDATION_DOCS)
-    canonical_sop = [
-        ai_work / "env" / "SIMULATION.md",
-        ai_work / "guide" / "VIVADO_SIM_SOP.md",
-    ]
-    if attempted:
-        for name in FOUNDATION_DOCS:
-            path = ai_work / name
-            if not path.is_file() or not read_text(path).strip():
-                errors.append(f"Mode 1 incomplete: missing or empty AI-work/{name}")
-                continue
+    for relative in ("env/RULES.md", "env/SETUP_STATUS.md"):
+        path = ai_work / relative
+        if path.is_file():
             count = len(PLACEHOLDER.findall(read_text(path)))
             if count:
-                warnings.append(f"AI-work/{name}: {count} unresolved placeholder(s)")
-        if not any(path.is_file() and read_text(path).strip() for path in canonical_sop):
-            errors.append("Mode 1 incomplete: missing env/SIMULATION.md and guide/VIVADO_SIM_SOP.md")
-        status = ai_work / "env" / "SETUP_STATUS.md"
-        if status.is_file() and not re.search(r"(DISCOVERED|READY|BLOCKED|IN_PROGRESS)", read_text(status), re.IGNORECASE):
-            errors.append("env/SETUP_STATUS.md: missing a declared readiness state")
-    else:
-        warnings.append("Mode 1 foundation has not been attempted; only bootstrap skeleton is present")
+                warnings.append(f"AI-work/{relative}: {count} unresolved placeholder(s)")
 
     log = ai_work / "LOG.md"
     if log.is_file() and not re.search(r"\d{4}-\d{2}-\d{2}", read_text(log)):
@@ -78,6 +59,8 @@ def validate(ai_work: Path) -> tuple[list[str], list[str]]:
     questions = ai_work / "OPEN-QUESTIONS.md"
     if questions.is_file() and not re.search(r"\|", read_text(questions)):
         warnings.append("OPEN-QUESTIONS.md has no structured question table")
+    if not any((ai_work / area).iterdir() for area in ("features", "bringup") if (ai_work / area).is_dir()):
+        warnings.append("no Mode 3 feature or Mode 4 bring-up unit is present yet")
     return errors, warnings
 
 

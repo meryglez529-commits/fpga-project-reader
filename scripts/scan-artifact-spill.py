@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scan for runtime artifacts spilled outside AI-work.
 
-This helps Mode 3 avoid leaving Vivado/xsim/ILA outputs in D: root or the
+This helps Mode 3 and Mode 4 avoid leaving Vivado/xsim/ILA outputs in D: root or the
 project root. It reports findings only; it never moves or deletes files.
 """
 

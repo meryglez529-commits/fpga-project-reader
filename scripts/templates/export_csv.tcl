@@ -23,6 +23,8 @@
 #   This script is provided as a fallback. For most projects you should
 #   instead add to your testbench:
 #
+#     // Mode 5: write under AI-work/features/<feature>/<UNIT>/out/sim.
+#
 #     integer fp;
 #     initial begin
 #         fp = $fopen("AI-work/sim_out/sim_result.csv", "w");
@@ -37,9 +39,10 @@
 #==============================================================================
 
 # --- knobs ------------------------------------------------------------------
-set wdb_path     "AI-work/sim_out/sim.wdb"
-set vcd_path     "AI-work/sim_out/sim.vcd"
-set csv_path     "AI-work/sim_out/sim_export.csv"
+set out_dir      "AI-work/sim_out"
+set wdb_path     "$out_dir/sim.wdb"
+set vcd_path     "$out_dir/sim.vcd"
+set csv_path     "$out_dir/sim_export.csv"
 
 # 要导出的信号路径列表（按 testbench 实际层次填写）
 set signals_to_dump {

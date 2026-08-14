@@ -12,12 +12,16 @@ Prerequisites:
 
 | Item | Requirement |
 |---|---|
-| Project context | Mode 1 foundation exists, or establish the needed foundation first |
-| Environment | Mode 1 records toolchain, baseline protection, rules, and simulation constraints |
+| Project context | Mode 1 foundation is `READY`, or a Mode 4 handoff is validated as `MODE3_READY` |
+| Environment | Mode 1 foundation or Mode 4 handoff records toolchain, provenance, rules, and simulation/build constraints |
 | User rules | `AI-work/env/RULES.md` explicitly confirmed |
 | Work tracking | One unit under `AI-work/features/<feature-slug>/<UNIT>/` |
 
 If requirements are unclear, write questions in `REQUIREMENTS.md` and ask the user. Do not start RTL.
+
+When entering from Mode 4, read `MODE3_HANDOFF.md`, `ACCEPTANCE_MATRIX.md`, `DEMO_DEPENDENCY_MATRIX.md`, and the relevant demo `REUSE_MANIFEST.md` before planning changes. Treat the official design root and canonical shared sources in that handoff as authoritative. If no valid Mode 1 or Mode 4 entry exists, establish the matching foundation before feature work.
+
+Before editing a shared board constraint, clock/reset source, interface core, or vendor IP configuration, map the change through `DEMO_DEPENDENCY_MATRIX.md` and mark affected demo evidence `STALE`. Do not copy a demo source into product to avoid this dependency. Never promote an asset classified `TEST_ONLY`, `GENERATED`, or `OBSOLETE` into product source.
 
 ### 0.1 Existing-image board-debug iteration
 
@@ -312,6 +316,8 @@ Before final response, check:
 - `SIM_REPLAY.md` TC count, script names, and evidence paths match files on disk.
 - PASS / BUILD PASS / board conclusions are recorded with evidence paths.
 - Related annotations are still valid or marked stale.
+- Mode 4 dependency mappings were checked; affected demos are either revalidated or explicitly `STALE`.
+- Product sources do not consume Mode 4 assets classified `TEST_ONLY`, `GENERATED`, or `OBSOLETE`.
 - Runtime artifacts are not scattered in D: root or the project root.
 - Verified facts are promoted to as-built when appropriate.
 

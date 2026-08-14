@@ -8,10 +8,13 @@
 #
 # Usage (PowerShell, from project root):
 #   & "C:/Xilinx/Vivado/2021.1/bin/vivado.bat" -mode batch `
-#       -source AI-work/scripts/run_sim.tcl `
-#       -tclargs <project.xpr> [<sim_set>] [<runtime>] `
 #       -log    AI-work/sim_out/run_sim.log `
-#       -journal AI-work/sim_out/run_sim.jou
+#       -journal AI-work/sim_out/run_sim.jou `
+#       -source AI-work/scripts/run_sim.tcl `
+#       -tclargs <project.xpr> [<sim_set>] [<runtime>] [<out_dir>]
+#
+# Mode 5 feature runs should pass a unit-local out_dir, for example:
+#   AI-work/features/<feature>/<UNIT>/out/sim
 #
 # Customize before first use:
 #   - `default_sim_set`  : usually `sim_1`
@@ -24,10 +27,9 @@
 # --- knobs ------------------------------------------------------------------
 set default_sim_set  "sim_1"
 set default_runtime  "1ms"
+set default_out_dir  "AI-work/sim_out"
 set pass_token       "PASS"
 set fail_token       "FAIL"
-set csv_path         "AI-work/sim_out/sim_result.csv"
-set wdb_path         "AI-work/sim_out/sim.wdb"
 set log_keep_lines   500       ;# 仅保留尾部 N 行做 pass/fail 判定
 # ----------------------------------------------------------------------------
 
@@ -42,15 +44,19 @@ if {[llength $argv] < 1} {
 set xpr     [lindex $argv 0]
 set sim_set [expr {[llength $argv] >= 2 ? [lindex $argv 1] : $default_sim_set}]
 set runtime [expr {[llength $argv] >= 3 ? [lindex $argv 2] : $default_runtime}]
+set out_dir [expr {[llength $argv] >= 4 ? [lindex $argv 3] : $default_out_dir}]
+set csv_path "$out_dir/sim_result.csv"
+set wdb_path "$out_dir/sim.wdb"
+set log_file "$out_dir/run_sim.log"
 
 if {![file exists $xpr]} {
     fail_line "xpr not found: $xpr"
     exit 2
 }
-info_line "xpr=$xpr sim_set=$sim_set runtime=$runtime"
+info_line "xpr=$xpr sim_set=$sim_set runtime=$runtime out_dir=$out_dir"
 
 # --- 2. 准备输出目录 --------------------------------------------------------
-file mkdir AI-work/sim_out
+file mkdir $out_dir
 file mkdir AI-work/sim
 
 # --- 3. 打开工程 ------------------------------------------------------------
@@ -92,7 +98,6 @@ close_project
 # --- 7. 解析 testbench 的 PASS/FAIL --------------------------------------
 # Vivado 把 $display 的输出写到 .log（启动时的 -log 参数）。
 # 我们让调用方传日志路径，这里默认从 AI-work/sim_out/run_sim.log 读。
-set log_file "AI-work/sim_out/run_sim.log"
 if {![file exists $log_file]} {
     fail_line "run_sim log not found: $log_file (forgot -log flag?)"
     exit 4

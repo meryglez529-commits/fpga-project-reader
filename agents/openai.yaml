@@ -1,4 +1,4 @@
 interface:
   display_name: "FPGA Cowork"
-  short_description: "Map FPGA projects, deep-read RTL paths, set up AI-work, and co-develop features through RTL, sim, synth, and ILA evidence."
-  default_prompt: "Use $fpga-cowork to analyze this FPGA project, identify the main data links, deep-read selected paths, annotate or compare a single RTL/source file, set up the `AI-work/` co-work environment with project-level Vivado simulation SOP, or develop a new feature through requirements, architecture, RTL implementation, simulation replay, synthesis/implementation/bitstream evidence, ILA/board-debug artifacts, and as-built handoff."
+  short_description: "Bring up new FPGA boards and co-develop verified RTL systems."
+  default_prompt: "Use $fpga-cowork to bring up a new FPGA board from schematics through reusable interface demos and a Mode-3-ready product baseline, or to take over and develop an existing FPGA project with evidence-backed verification."

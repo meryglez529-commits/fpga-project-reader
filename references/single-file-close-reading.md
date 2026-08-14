@@ -1,20 +1,26 @@
 # Mode 2 — Single-File Close Reading and Annotation
 
-Use this mode when the user names one RTL/source file and asks to read, explain, annotate, comment, or compare it. The objective is teaching and traceability without functional behavior changes.
+Use this mode when the user names one RTL/source file and asks to read, explain, annotate, comment, or compare it. First classify the request: explanation/read/compare is read-only; an explicit annotation request is a full active user-RTL closure annotation. The objective is teaching and traceability without functional behavior changes.
 
 ## 1. Boundary
 
-Mode 2 may edit comments in the selected source and its required user-RTL dependency closure. It never changes ports, parameters, logic, constraints, IP, project settings, or generated/third-party code. If close reading exposes a defect or a needed behavior change, record it and open a Mode 3 unit.
+### Read-only close reading
 
-## 2. Resolve the annotation closure first
+For an explanation, deep-read, or comparison request, do not edit RTL and do not create an annotation manifest. Trace only the active hierarchy needed to support the conclusion, clearly separate it from commented-out historical instances, and say that the result is read-only.
 
-Before editing, resolve the selected module’s directly instantiated **user RTL** modules, then recursively resolve their instantiated user RTL modules until reaching one of these boundaries:
+### Explicit annotation closure
+
+For a request containing `注释`, `添加注释`, `comment`, or `用 Mode 2 注释`, edit comments only in the selected source and its full transitive **active user-RTL** instantiation closure. It is incomplete to annotate only the selected root. Never change ports, parameters, logic, constraints, IP, project settings, or generated/third-party code. If close reading exposes a defect or a needed behavior change, record it and open a Mode 3 unit.
+
+## 2. Resolve the explicit annotation closure first
+
+Before editing, resolve the selected module’s directly instantiated **active user RTL** modules, then recursively resolve their instantiated active user RTL modules until reaching one of these boundaries:
 
 - a leaf source module with no user RTL child;
 - generated IP, vendor primitive, encrypted RTL, black box or third-party source;
 - a module whose source cannot be uniquely resolved.
 
-For each boundary, record the instance name, module/interface contract, source classification and reason it is not annotated. A child referenced from multiple instances is annotated once and its instance sites are listed. Do not merely follow files included by a compile list: this closure follows actual module instantiation.
+For each boundary, record the instance name, module/interface contract, source classification and reason it is not annotated. A child referenced from multiple instances is annotated once and its instance sites are listed. Do not include commented-out instances in the closure; list them only as historical context when useful. Do not merely follow files included by a compile list: this closure follows actual module instantiation.
 
 ## 3. Preserve source format exactly
 
@@ -24,9 +30,9 @@ For every edited file, detect before editing and write into the manifest:
 - line ending: CRLF or LF;
 - original module names, ports and a pre-edit content/diff fingerprint.
 
-Write comments in the file’s established language and comment style. Preserve encoding, BOM and line endings when saving. After editing, verify that the functional content is byte-identical apart from inserted/replaced comment ranges: ports, module/interface declarations, parameters, assignments, procedural logic and instantiation statements must be unchanged. If safe format preservation is not possible, stop before writing and report the blocker.
+Write comments in the file’s established language and comment style. Preserve encoding, BOM and line endings when saving. When the source can make a byte-for-byte GB18030 decode/re-encode round trip, choose GB18030 for annotation—even if its historical content appears to contain more than one legacy encoding—and encode all new comments as GB18030. After editing, verify that the functional content is byte-identical apart from inserted/replaced comment ranges: ports, module/interface declarations, parameters, assignments, procedural logic and instantiation statements must be unchanged. Stop only if no single encoding permits a lossless round trip, or if the available writer cannot prove non-comment bytes are preserved.
 
-Use `check-source-format.py <source> --write-json AI-work/annotations/<file>.before-format.json` before editing and the same command with `--expected-json` afterwards. The helper never edits RTL and fails if encoding, BOM, or newline convention changes; record its commands and the functional diff review in the annotation manifest.
+Use `check-source-format.py <source> --write-json AI-work/annotations/<file>.before-format.json` before editing and the same command with `--expected-json` afterwards. For a GB18030 source that cannot be opened by the ordinary patch editor, use `insert-rtl-comments.py AI-work/annotations/<scope>.comment-plan.json --apply`: it requires the pre-edit capture, proves the original bytes round-trip under the selected encoding, and writes only planned `//` insertions. The format helper never edits RTL and fails if encoding, BOM, or newline convention changes; record its commands and the functional diff review in the annotation manifest.
 
 ## 4. Reading workflow
 

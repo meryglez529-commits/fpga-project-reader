@@ -55,7 +55,18 @@
 |---|---|---|---|
 | | | | |
 
-## 7. 问题跟踪
+## 7. 工具运行与归档记录
+
+| 项 | 路径/命令 | 状态 |
+|---|---|---|
+| unit root | `AI-work/features/<feature-slug>/<UNIT>` | |
+| artifact marker | `AI-work/features/<feature-slug>/<UNIT>/out/.artifact_start` | |
+| Vivado log/journal 策略 | `<所有 -log/-journal 指向当前 unit out/*>` | |
+| ILA 脚本目录 | `AI-work/features/<feature-slug>/<UNIT>/ila` | |
+| ILA 输出目录 | `AI-work/features/<feature-slug>/<UNIT>/out/ila` / `out/hw_debug` | |
+| spill scan | `python <skill>/scripts/scan-artifact-spill.py <project-root> --since-file <UNIT>/out/.artifact_start --allowed-root <UNIT>` | |
+
+## 8. 问题跟踪
 
 ### 已解决
 
@@ -69,7 +80,7 @@
 |---|---|---|
 | | | |
 
-## 8. 变更记录
+## 9. 变更记录
 
 | 日期 | 文件/阶段 | 变更内容 | 负责人 |
 |---|---|---|---|

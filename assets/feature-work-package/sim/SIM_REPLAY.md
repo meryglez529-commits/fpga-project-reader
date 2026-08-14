@@ -4,6 +4,17 @@
 
 项目级仿真环境 SOP：`AI-work/env/SIMULATION.md`（或项目指定的 `AI-work/guide/VIVADO_SIM_SOP.md`）
 
+## 0. Preflight
+
+| 项 | 值 |
+|---|---|
+| 已读取项目级 SOP | `AI-work/env/SIMULATION.md` / `AI-work/guide/VIVADO_SIM_SOP.md` |
+| 复用的已验证脚本 | `<AI-work/features/.../sim/run_*.tcl>` |
+| 当前 unit root | `AI-work/features/<feature-slug>/<UNIT>` |
+| 仿真输出目录 | `AI-work/features/<feature-slug>/<UNIT>/out/sim` |
+| artifact marker | `AI-work/features/<feature-slug>/<UNIT>/out/.artifact_start` |
+| 已知不可用路径 | `<从项目 SOP 摘要记录，例如 direct xsim / launch_simulation batch>` |
+
 ## 1. 本次仿真验证什么
 
 <说明验证目标和边界。>
